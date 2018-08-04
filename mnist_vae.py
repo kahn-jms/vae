@@ -160,7 +160,7 @@ class vaeMNISTConv2D():
 
 if __name__ == '__main__':
 
-    epochs = 10
+    epochs = 1
     batch_size = 128
     # Create our training model
     vae = vaeMNISTConv2D()
@@ -171,4 +171,4 @@ if __name__ == '__main__':
         batch_size=batch_size,
         validation_data=(vae.x_test, None),
     )
-    vae.save_weights('trainings/vae_mlp_mnist.h5')
+    vae.vae_model.save_weights('trainings/vae_mlp_mnist.h5')
