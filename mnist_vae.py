@@ -17,6 +17,7 @@ from keras.losses import mse
 from keras import backend as K
 
 from plotLatentSpace import plotLatentSpace
+from plotDecoderSamples import plotDecoderSamples
 
 
 class vaeMNISTConv2D():
@@ -169,12 +170,13 @@ if __name__ == '__main__':
 
     # Set up necessary callback
     plotLatentCallback = plotLatentSpace('latent_plots', vae.x_test, vae.y_test)
+    plotDecoderSamples = plotDecoderSamples('decoder_samples')
 
     vae.vae_model.fit(
         vae.x_train,
         epochs=epochs,
         batch_size=batch_size,
         validation_data=(vae.x_test, None),
-        callbacks=[plotLatentCallback],
+        callbacks=[plotLatentCallback, plotDecoderSamples],
     )
     vae.vae_model.save_weights('trainings/vae_mlp_mnist.h5')
