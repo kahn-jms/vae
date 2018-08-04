@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 class plotLatentSpace(Callback):
-    def __init__(self, output_dir, validation_labels, period=1):
+    def __init__(self, output_dir, validation_x, validation_y, period=1):
         '''Want to add some extra input args to base CallBack class
 
         For now need to pass validation labels manually, cna't include it in
@@ -20,13 +20,15 @@ class plotLatentSpace(Callback):
         super(plotLatentSpace, self).__init__()
         self.output_dir = output_dir
         self.period = period
-        self.encoder = self.model.get_layer('encoder')
-        self.x_test = self.model.validation_data[0]
-        self.y_test = validation_labels
+        # This doesn't seem to be saved as a model attribute anymore
+        # self.x_test = self.model.validation_data[0]
+        self.x_test = validation_x
+        self.y_test = validation_y
 
-        os.makedirs(self.output_dir, exit_ok=True)
+        os.makedirs(self.output_dir, exist_ok=True)
 
     def on_train_begin(self, logs={}):
+        self.encoder = self.model.get_layer('encoder')
         return
 
     def on_train_end(self, logs={}):

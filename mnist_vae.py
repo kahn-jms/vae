@@ -168,7 +168,7 @@ if __name__ == '__main__':
     vae = vaeMNISTConv2D()
 
     # Set up necessary callback
-    plotLatentCallback = plotLatentSpace('latent_plots', vae.y_test)
+    plotLatentCallback = plotLatentSpace('latent_plots', vae.x_test, vae.y_test)
 
     vae.vae_model.fit(
         vae.x_train,
