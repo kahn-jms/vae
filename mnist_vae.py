@@ -26,14 +26,14 @@ class vaeMNISTConv2D():
         # Should be able to get this from x_train.shape
         self.input_dim = 28 * 28
 
-        self.encoder, self.encoder_inputs, self.z_mean, self.z_log_var = self.build_encoder(self.x_train.shape[1:])
-        self.decoder, self.decoder_outputs = self.build_decoder()
-        self.vae_model = self.build_vae(
-            self.encoder,
-            self.decoder,
-            self.encoder_inputs,
-            self.decoder_outputs
-        )
+        # self.encoder, self.encoder_inputs, self.z_mean, self.z_log_var = self.build_encoder(self.x_train.shape[1:])
+        # self.decoder, self.decoder_outputs = self.build_decoder()
+        self.vae_model = self.build_vae()
+        #     self.encoder,
+        #     self.decoder,
+        #     self.encoder_inputs,
+        #     self.decoder_outputs
+        # )
 
     def load_data(self):
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -56,26 +56,27 @@ class vaeMNISTConv2D():
         # Since it's a log the 0.5 is a square root
         return z_mean + (K.exp(0.5 * z_log_var) * epsilon)
 
-    def build_encoder(self, input_shape):
+    def build_vae(self):
+    # def build_encoder(self, input_shape):
 
         # Start with normal convolutional net to classify images (kinda)
-        c_input = Input(shape=input_shape, name='encoder_input')
-        c1 = Conv2D(
+        encoder_input = Input(shape=self.x_train.shape[1:], name='encoder_input')
+        encoder_1 = Conv2D(
             8,
             (3, 3),
             padding='same',
-            input_shape=input_shape
-        )(c_input)
-        c2 = Conv2D(8, (3, 3), activation='relu')(c1)
-        c3 = MaxPooling2D(pool_size=(2, 2))(c2)
-        c4 = Dropout(0.25)(c3)
-        c5 = Flatten()(c4)
-        c6 = Dense(32, activation='relu')(c5)
-        c7 = Dropout(0.25)(c6)
+            # input_shape=input_shape
+        )(encoder_input)
+        encoder_2 = Conv2D(8, (3, 3), activation='relu')(encoder_1)
+        encoder_3 = MaxPooling2D(pool_size=(2, 2))(encoder_2)
+        encoder_4 = Dropout(0.25)(encoder_3)
+        encoder_5 = Flatten()(encoder_4)
+        encoder_6 = Dense(32, activation='relu')(encoder_5)
+        encoder_7 = Dropout(0.25)(encoder_6)
 
         # Instead of classes, output the encoding as a mean and stddev
-        z_mean = Dense(self.latent_dim, name='z_mean')(c7)
-        z_log_var = Dense(self.latent_dim, name='z_log_var')(c7)
+        z_mean = Dense(self.latent_dim, name='z_mean')(encoder_7)
+        z_log_var = Dense(self.latent_dim, name='z_log_var')(encoder_7)
 
         # Add our random sampler as a final layer of encoder
         # Would like to separate this to a separate sub-network
@@ -86,65 +87,73 @@ class vaeMNISTConv2D():
         )([z_mean, z_log_var])
 
         # Finally compile the model
-        encoder = Model(c_input, [z_mean, z_log_var, z], name='encoder')
+        encoder = Model(encoder_input, [z_mean, z_log_var, z], name='encoder')
         encoder.summary()
 
-        return encoder, c_input, z_mean, z_log_var
+        # return encoder, c_input, z_mean, z_log_var
 
-    def build_decoder(self):
+    # def build_decoder(self):
         '''Basically the encoder backwards
 
         But this time need to calculate  upsampling sizes to get the final pixel sizes right.
         '''
 
-        c_input = Input(shape=(self.latent_dim,), name='decoder_input')
-        c1 = Dense(7 * 7 * 16, activation='relu')(c_input)
-        c2 = Reshape((7, 7, 16))(c1)
+        decoder_input = Input(shape=(self.latent_dim,), name='decoder_input')
+        decoder_1 = Dense(7 * 7 * 16, activation='relu')(decoder_input)
+        decoder_2 = Reshape((7, 7, 16))(decoder_1)
         # Upsample to (14, 14, ...)
-        c3 = Conv2DTranspose(
+        decoder_3 = Conv2DTranspose(
             16,
             5,
             strides=2,
             padding='same',
             activation='relu',
             kernel_initializer='glorot_normal'
-        )(c2)
-        c3 = BatchNormalization()(c3)
+        )(decoder_2)
+        decoder_4 = BatchNormalization()(decoder_3)
         # Upsample to (28, 28, ...)
-        c4 = Conv2DTranspose(
+        decoder_output = Conv2DTranspose(
             1,
             5,
             strides=2,
             padding='same',
             activation='tanh',
             kernel_initializer='glorot_normal'
-        )(c3)
+        )(decoder_4)
 
         # Finally compile the model
-        decoder = Model(c_input, c4, name='decoder')
+        decoder = Model(decoder_input, decoder_output, name='decoder')
         decoder.summary()
 
-        return decoder, c4
+        # return decoder, c4
 
-    def build_vae(self, encoder, decoder, encoder_inputs, decoder_outputs):
         '''Instantiate the VAE model'''
-        outputs = decoder(encoder(encoder_inputs)[2])
-        vae = Model(encoder_inputs, outputs, name='vae_mlp')
-        vae_loss = self.build_loss()
+        # enc = encoder(encoder_inputs)[2]
+        # enc = K.reshape(enc, (64, 2))
+        # print('here:', enc)
+        # outputs = decoder(enc)
+        outputs = decoder(encoder(encoder_input)[2])
+        vae = Model(encoder_input, outputs, name='vae_mlp')
+        vae_loss = self.build_loss(encoder_input, outputs, z_mean, z_log_var)
         vae.add_loss(vae_loss)
         vae.compile(optimizer='adam')
         vae.summary()
 
         return vae
 
-    def build_loss(self):
-        reconstruction_loss = mse(self.encoder_inputs, self.decoder_outputs)
+    def build_loss(self, inputs, outputs, z_mean, z_log_var):
+        reconstruction_loss = mse(inputs, outputs)
+        # print(reconstruction_loss)
         reconstruction_loss *= self.input_dim
-        kl_loss = (1 + self.z_log_var -
-                   K.square(self.z_mean) -
-                   K.exp(self.z_log_var))
+        # Might need to add axis=[1, 2]
+        reconstruction_loss = K.sum(reconstruction_loss)
+        kl_loss = (1 + z_log_var -
+                   K.square(z_mean) -
+                   K.exp(z_log_var))
         kl_loss = K.sum(kl_loss, axis=-1)
         kl_loss *= -0.5
+        print('recloss:', reconstruction_loss)
+        print('klloss:', kl_loss)
         vae_loss = K.mean(reconstruction_loss + kl_loss)
         return vae_loss
 
@@ -152,7 +161,7 @@ class vaeMNISTConv2D():
 if __name__ == '__main__':
 
     epochs = 10
-    batch_size = 64
+    batch_size = 128
     # Create our training model
     vae = vaeMNISTConv2D()
 
@@ -162,3 +171,4 @@ if __name__ == '__main__':
         batch_size=batch_size,
         validation_data=(vae.x_test, None),
     )
+    vae.save_weights('trainings/vae_mlp_mnist.h5')
