@@ -16,6 +16,8 @@ from keras.layers import Lambda, Input, Reshape
 from keras.losses import mse
 from keras import backend as K
 
+from plotLatentSpace import plotLatentSpace
+
 
 class vaeMNISTConv2D():
     def __init__(self):
@@ -165,10 +167,14 @@ if __name__ == '__main__':
     # Create our training model
     vae = vaeMNISTConv2D()
 
+    # Set up necessary callback
+    plotLatentCallback = plotLatentSpace('latent_plots', vae.y_test)
+
     vae.vae_model.fit(
         vae.x_train,
         epochs=epochs,
         batch_size=batch_size,
         validation_data=(vae.x_test, None),
+        callbacks=[plotLatentCallback],
     )
     vae.vae_model.save_weights('trainings/vae_mlp_mnist.h5')
