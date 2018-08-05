@@ -44,18 +44,19 @@ class plotDecoderSamples(Callback):
             grid_x = np.linspace(-4, 4, self.n_samples)
             grid_y = np.linspace(-4, 4, self.n_samples)  # [::-1]
 
-            fig = plt.figure(figsize=(self.n_samples, self.n_samples))
+            fig, axarr = plt.subplots(self.n_samples, self.n_samples)
 
             for idx, x in enumerate(grid_x):
                 for idy, y in enumerate(grid_y):
                     z_sample = np.array([[x, y]])
                     sample_fig = self.decoder.predict(z_sample)[0]
+                    sample_fig = sample_fig.reshape(28, 28)
                     # I think matplotlib scales ranges [0, 1] itself
                     # sample_fig *= 255
-                    ax = fig.add_subplot(self.n_samples, self.n_samples, (idx * self.n_samples + idy))
-                    fig.imshow(sample_fig, cmap='Greys_r')
+                    axarr[idx, idy].imshow(sample_fig, cmap='Greys_r')
+                    # axarr[idx, idy].plot(sample_fig)
                     # Could also do ax.plot(sample_fig) ?
-                    ax.set_title('[{}, {}]'.format(x, y))
+                    # axarr[idx, idy].set_title('[{}, {}]'.format(x, y))
 
             # Set up the x, y labels to show the z coords we sampled
             # Need to figure out how to do this

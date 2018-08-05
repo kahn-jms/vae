@@ -1,3 +1,5 @@
 .mypy_cache/
 trainings/
 latent_plots/
+__pycache__/
+decoder_samples/
