@@ -163,21 +163,20 @@ class vaeMNISTConv2D():
 
 if __name__ == '__main__':
 
-    epochs = 3
+    epochs = 10
     batch_size = 128
     # Create our training model
     vae = vaeMNISTConv2D()
 
     # Set up necessary callback
     plotLatentCallback = plotLatentSpace('latent_plots', vae.x_test, vae.y_test)
-    plotDecoderSamples = plotDecoderSamples('decoder_samples', n_samples=5)
+    plotDecoderSamples = plotDecoderSamples('decoder_samples')
 
     vae.vae_model.fit(
-        vae.x_train[:1000],
+        vae.x_train,
         epochs=epochs,
         batch_size=batch_size,
         validation_data=(vae.x_test, None),
-        callbacks=[plotDecoderSamples],
-        # callbacks=[plotLatentCallback, plotDecoderSamples],
+        callbacks=[plotLatentCallback, plotDecoderSamples],
     )
     vae.vae_model.save_weights('trainings/vae_mlp_mnist.h5')

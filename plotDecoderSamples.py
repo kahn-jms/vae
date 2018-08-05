@@ -41,19 +41,28 @@ class plotDecoderSamples(Callback):
             filename = os.path.join(self.output_dir, 'vae_decoder_sample_{}.pdf'.format(epoch))
 
             # Cut the latent space into a grid and we will draw samples from each point
-            grid_x = np.linspace(-4, 4, self.n_samples)
-            grid_y = np.linspace(-4, 4, self.n_samples)  # [::-1]
+            # Ideally should exrtact the ranges to split from the ranges of latent space of the validation
+            # set, I think I'd need to combine with the latent plotting callback for this
+            # unless I can get the output of a previous callback's funtion, I doubt it though
+            grid_x = np.linspace(-6, 6, self.n_samples)
+            grid_y = np.linspace(-6, 6, self.n_samples)  # [::-1]
 
-            fig, axarr = plt.subplots(self.n_samples, self.n_samples)
+            fig, axarr = plt.subplots(self.n_samples, self.n_samples, sharex=True, sharey=True)
 
             for idx, x in enumerate(grid_x):
                 for idy, y in enumerate(grid_y):
-                    z_sample = np.array([[x, y]])
+                    z_sample = np.array([[y, x]])
                     sample_fig = self.decoder.predict(z_sample)[0]
                     sample_fig = sample_fig.reshape(28, 28)
                     # I think matplotlib scales ranges [0, 1] itself
                     # sample_fig *= 255
-                    axarr[idx, idy].imshow(sample_fig, cmap='Greys_r')
+                    axarr[idy, idx].imshow(sample_fig, cmap='Greys_r')
+                    if idy == (len(grid_y) - 1):
+                        axarr[idy, idx].set_xlabel(x)
+                    if idx == 0:
+                        axarr[idy, idx].set_ylabel(y)
+                    axarr[idy, idx].set_xticks([])
+                    axarr[idy, idx].set_yticks([])
                     # axarr[idx, idy].plot(sample_fig)
                     # Could also do ax.plot(sample_fig) ?
                     # axarr[idx, idy].set_title('[{}, {}]'.format(x, y))
