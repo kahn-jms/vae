@@ -7,6 +7,7 @@
 import numpy as np
 
 import keras
+import os
 from keras.datasets import mnist
 from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D
@@ -60,17 +61,16 @@ class vaeMNISTConv2D():
         return z_mean + (K.exp(0.5 * z_log_var) * epsilon)
 
     def build_vae(self):
-    # def build_encoder(self, input_shape):
 
         # Start with normal convolutional net to classify images (kinda)
         encoder_input = Input(shape=self.x_train.shape[1:], name='encoder_input')
         encoder_1 = Conv2D(
             8,
-            (3, 3),
+            (3, 10),
             padding='same',
             # input_shape=input_shape
         )(encoder_input)
-        encoder_2 = Conv2D(8, (3, 3), activation='relu')(encoder_1)
+        encoder_2 = Conv2D(8, (10, 3), activation='relu')(encoder_1)
         encoder_3 = MaxPooling2D(pool_size=(2, 2))(encoder_2)
         encoder_4 = Dropout(0.25)(encoder_3)
         encoder_5 = Flatten()(encoder_4)
@@ -95,7 +95,6 @@ class vaeMNISTConv2D():
 
         # return encoder, c_input, z_mean, z_log_var
 
-    # def build_decoder(self):
         '''Basically the encoder backwards
 
         But this time need to calculate  upsampling sizes to get the final pixel sizes right.
@@ -107,7 +106,7 @@ class vaeMNISTConv2D():
         # Upsample to (14, 14, ...)
         decoder_3 = Conv2DTranspose(
             16,
-            5,
+            (3, 10),
             strides=2,
             padding='same',
             activation='relu',
@@ -117,7 +116,7 @@ class vaeMNISTConv2D():
         # Upsample to (28, 28, ...)
         decoder_output = Conv2DTranspose(
             1,
-            5,
+            (10, 3),
             strides=2,
             padding='same',
             activation='tanh',
@@ -165,6 +164,8 @@ if __name__ == '__main__':
 
     epochs = 10
     batch_size = 128
+    # No gpu
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     # Create our training model
     vae = vaeMNISTConv2D()
 
