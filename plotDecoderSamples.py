@@ -5,7 +5,7 @@
 # James Kahn 2018
 
 import os
-from keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -72,6 +72,6 @@ class plotDecoderSamples(Callback):
             # plt.xlabel("z[0]")
             # plt.ylabel("z[1]")
             plt.savefig(filename)
-            # plt.show()
+            plt.show()
 
         return

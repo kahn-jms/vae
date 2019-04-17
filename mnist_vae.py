@@ -4,18 +4,18 @@
 # Variational autoencoder to run on MNIST images
 # James Kahn 2018
 
-import numpy as np
+# import numpy as np
 
-import keras
-import os
-from keras.datasets import mnist
-from keras.models import Model
-from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Conv2DTranspose
-from keras.layers import Dense, Dropout, Flatten, BatchNormalization
-from keras.layers import Lambda, Input, Reshape
-from keras.losses import mse
-from keras import backend as K
+import tensorflow as tf
+# from tensorflow import keras
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Conv2DTranspose
+from tensorflow.keras.layers import Dense, Dropout, Flatten, BatchNormalization
+from tensorflow.keras.layers import Lambda, Input, Reshape
+from tensorflow.keras.losses import mse
+from tensorflow.keras import backend as K
 
 from plotLatentSpace import plotLatentSpace
 from plotDecoderSamples import plotDecoderSamples
@@ -38,6 +38,12 @@ class vaeMNISTConv2D():
         #     self.encoder_inputs,
         #     self.decoder_outputs
         # )
+
+        # Set GPU to only use what it needs
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        config.gpu_options.visible_device_list = "0"
+        K.set_session(tf.Session(config=config))
 
     def load_data(self):
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -149,9 +155,7 @@ class vaeMNISTConv2D():
         reconstruction_loss *= self.input_dim
         # Might need to add axis=[1, 2]
         reconstruction_loss = K.sum(reconstruction_loss)
-        kl_loss = (1 + z_log_var -
-                   K.square(z_mean) -
-                   K.exp(z_log_var))
+        kl_loss = (1 + z_log_var - K.square(z_mean) - K.exp(z_log_var))
         kl_loss = K.sum(kl_loss, axis=-1)
         kl_loss *= -0.5
         print('recloss:', reconstruction_loss)
